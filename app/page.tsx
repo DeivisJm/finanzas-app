@@ -1,65 +1,106 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+
+interface Gasto {
+  id: number;
+  descripcion: string;
+  monto: number;
+}
 
 export default function Home() {
+  const [texto, setTexto] = useState("");
+  const [gastos, setGastos] = useState<Gasto[]>([]);
+
+  const cargarGastos = async () => {
+    const res = await fetch("/api/gastos");
+    const data = await res.json();
+
+    setGastos(data);
+  };
+
+  useEffect(() => {
+    cargarGastos();
+  }, []);
+
+  const agregarGasto = async () => {
+    if (!texto) return;
+
+    await fetch("/api/gastos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        texto,
+      }),
+    });
+
+    setTexto("");
+
+    cargarGastos();
+  };
+
+  const total = gastos.reduce(
+    (acc, gasto) => acc + gasto.monto,
+    0
+  );
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen bg-zinc-950 text-white p-6">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-4xl font-bold mb-2">
+          Finanzas Personales
+        </h1>
+
+        <p className="text-zinc-400 mb-8">
+          Registra tus gastos por voz o texto.
+        </p>
+
+        <div className="bg-zinc-900 p-4 rounded-2xl mb-6">
+          <input
+            type="text"
+            placeholder="Ej: gasté 5000 colones en gasolina"
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            className="w-full p-4 rounded-xl bg-zinc-800 border border-zinc-700 outline-none mb-4"
+          />
+
+          <button
+            onClick={agregarGasto}
+            className="w-full bg-white text-black p-4 rounded-xl font-semibold cursor-pointer hover:opacity-80"
+          >
+            Guardar gasto
+          </button>
+        </div>
+
+        <div className="bg-zinc-900 p-4 rounded-2xl mb-6">
+          <h2 className="text-2xl font-bold mb-2">
+            Total gastado
+          </h2>
+
+          <p className="text-4xl font-bold text-green-400">
+            ₡{total.toLocaleString()}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="space-y-4">
+          {gastos.map((gasto) => (
+            <div
+              key={gasto.id}
+              className="bg-zinc-900 p-4 rounded-2xl flex justify-between items-center"
+            >
+              <p className="font-semibold">
+                {gasto.descripcion}
+              </p>
+
+              <p className="text-red-400 font-bold">
+                - ₡{gasto.monto.toLocaleString()}
+              </p>
+            </div>
+          ))}
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
