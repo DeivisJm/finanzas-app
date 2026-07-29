@@ -41,14 +41,19 @@ model Folder {
 }
 
 model Expense {
-  id          Int    @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   description String
   amount      Int
+  expenseDate DateTime  @default(now())
+  isPaid      Boolean   @default(false)
+  paidAt      DateTime?
 
   folderId Int
   folder   Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([folderId])
+  @@index([folderId, isPaid])
 }

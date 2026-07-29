@@ -10,28 +10,39 @@ interface ExpenseRouteContext {
 }
 
 /**
- * Returns every expense registered inside a specific folder.
+ * Converts a route parameter into a valid positive identifier.
+ */
+function parseIdentifier(value: string): number | null {
+  const identifier = Number(value);
+
+  return Number.isInteger(identifier) && identifier > 0
+    ? identifier
+    : null;
+}
+
+/**
+ * Returns pending expenses registered inside a folder.
  */
 export async function GET(
   _request: Request,
-  context: ExpenseRouteContext
+  context: ExpenseRouteContext,
 ) {
   try {
     const { folderId } = await context.params;
-    const parsedFolderId = Number(folderId);
+    const parsedFolderId = parseIdentifier(folderId);
 
-    if (!Number.isInteger(parsedFolderId) || parsedFolderId <= 0) {
+    if (!parsedFolderId) {
       return NextResponse.json(
         {
           message: "El identificador de la carpeta no es válido.",
         },
         {
           status: 400,
-        }
+        },
       );
     }
 
-    const folderExists = await prisma.folder.findUnique({
+    const folder = await prisma.folder.findUnique({
       where: {
         id: parsedFolderId,
       },
@@ -40,28 +51,34 @@ export async function GET(
       },
     });
 
-    if (!folderExists) {
+    if (!folder) {
       return NextResponse.json(
         {
           message: "La carpeta solicitada no existe.",
         },
         {
           status: 404,
-        }
+        },
       );
     }
 
     const expenses = await prisma.expense.findMany({
       where: {
         folderId: parsedFolderId,
+        isPaid: false,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [
+        {
+          expenseDate: "desc",
+        },
+        {
+          createdAt: "desc",
+        },
+      ],
     });
 
     return NextResponse.json(expenses);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to retrieve expenses:", error);
 
     return NextResponse.json(
@@ -70,32 +87,30 @@ export async function GET(
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }
 
 /**
- * Creates an expense inside a specific folder.
- *
- * @param request Request containing natural-language expense text.
+ * Creates an expense inside a folder from natural-language input.
  */
 export async function POST(
   request: Request,
-  context: ExpenseRouteContext
+  context: ExpenseRouteContext,
 ) {
   try {
     const { folderId } = await context.params;
-    const parsedFolderId = Number(folderId);
+    const parsedFolderId = parseIdentifier(folderId);
 
-    if (!Number.isInteger(parsedFolderId) || parsedFolderId <= 0) {
+    if (!parsedFolderId) {
       return NextResponse.json(
         {
           message: "El identificador de la carpeta no es válido.",
         },
         {
           status: 400,
-        }
+        },
       );
     }
 
@@ -111,11 +126,11 @@ export async function POST(
         },
         {
           status: 400,
-        }
+        },
       );
     }
 
-    const folderExists = await prisma.folder.findUnique({
+    const folder = await prisma.folder.findUnique({
       where: {
         id: parsedFolderId,
       },
@@ -124,24 +139,30 @@ export async function POST(
       },
     });
 
-    if (!folderExists) {
+    if (!folder) {
       return NextResponse.json(
         {
           message: "La carpeta seleccionada no existe.",
         },
         {
           status: 404,
-        }
+        },
       );
     }
 
     const parsedExpense = parseExpense(
-      validationResult.data.text
+      validationResult.data.text,
     );
+
+    const expenseDate = validationResult.data.expenseDate
+      ? new Date(`${validationResult.data.expenseDate}T12:00:00`)
+      : new Date();
 
     const expense = await prisma.expense.create({
       data: {
-        ...parsedExpense,
+        description: parsedExpense.description,
+        amount: parsedExpense.amount,
+        expenseDate,
         folderId: parsedFolderId,
       },
     });
@@ -149,7 +170,7 @@ export async function POST(
     return NextResponse.json(expense, {
       status: 201,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     const message =
       error instanceof Error
         ? error.message
@@ -163,7 +184,7 @@ export async function POST(
       },
       {
         status: 400,
-      }
+      },
     );
   }
 }
