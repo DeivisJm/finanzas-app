@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,7 @@ const themeInitializationScript = `
   (function () {
     try {
       const storedTheme = localStorage.getItem("theme");
+
       const systemPrefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)"
       ).matches;
@@ -36,11 +37,82 @@ const themeInitializationScript = `
 
 export const metadata: Metadata = {
   title: {
-    default: "Finanzas",
-    template: "%s | Finanzas",
+    default: "Wallet Pro",
+    template: "%s | Wallet Pro",
   },
+
+  applicationName: "Wallet Pro",
+
   description:
-    "Panel personal para administrar tarjetas, viajes, presupuestos y gastos.",
+    "Aplicación personal para organizar proyectos, tarjetas, viajes y gastos.",
+
+  manifest: "/manifest.webmanifest",
+
+  icons: {
+    icon: [
+      {
+        url: "/favicon.ico",
+        sizes: "any",
+      },
+      {
+        url: "/icon.png",
+        type: "image/png",
+        sizes: "512x512",
+      },
+    ],
+
+    apple: [
+      {
+        url: "/apple-icon.png",
+        type: "image/png",
+        sizes: "180x180",
+      },
+    ],
+  },
+
+  appleWebApp: {
+    capable: true,
+    title: "Wallet Pro",
+    statusBarStyle: "black-translucent",
+  },
+
+  formatDetection: {
+    telephone: false,
+  },
+
+  openGraph: {
+    type: "website",
+    locale: "es_CR",
+    siteName: "Wallet Pro",
+    title: "Wallet Pro",
+    description:
+      "Organizá proyectos, tarjetas, viajes y gastos desde un solo lugar.",
+  },
+
+  twitter: {
+    card: "summary",
+    title: "Wallet Pro",
+    description:
+      "Organizá proyectos, tarjetas, viajes y gastos desde un solo lugar.",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  colorScheme: "light dark",
+
+  themeColor: [
+    {
+      media: "(prefers-color-scheme: light)",
+      color: "#f7f7f8",
+    },
+    {
+      media: "(prefers-color-scheme: dark)",
+      color: "#09090b",
+    },
+  ],
 };
 
 export default function RootLayout({
