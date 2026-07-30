@@ -15,7 +15,7 @@ interface FolderPageProps {
 }
 
 /**
- * Loads a folder and its pending expenses.
+ * Loads a folder and its pending expenses. hay que cambiar lagooo
  */
 async function getFolder(
   projectSlug: string,
