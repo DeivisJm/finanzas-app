@@ -1,34 +1,46 @@
 import {
+  BriefcaseBusiness,
+  Building2,
   CircleDollarSign,
   CreditCard,
   Folder,
+  GraduationCap,
+  House,
   Landmark,
+  Laptop,
   Plane,
   ReceiptText,
+  ShoppingBag,
   Target,
+  WalletCards,
   type LucideIcon,
 } from "lucide-react";
 
 /**
- * Maps icon identifiers stored in the database to trusted Lucide components.
- *
- * This prevents arbitrary SVG or HTML content from being rendered.
+ * Associates trusted icon identifiers with Lucide components.
  */
 const iconRegistry: Record<string, LucideIcon> = {
+  "briefcase-business": BriefcaseBusiness,
+  building: Building2,
   "circle-dollar-sign": CircleDollarSign,
   "credit-card": CreditCard,
   folder: Folder,
+  graduation: GraduationCap,
+  house: House,
   landmark: Landmark,
+  laptop: Laptop,
   plane: Plane,
   "receipt-text": ReceiptText,
+  shopping: ShoppingBag,
   target: Target,
+  "wallet-cards": WalletCards,
 };
 
 /**
- * Returns the icon registered for the supplied identifier.
- *
- * Falls back to the generic Folder icon when the identifier is unknown.
+ * Returns the registered icon or a generic folder icon.
  */
-export function getIconComponent(iconName: string): LucideIcon {
+export function getIconComponent(
+  iconName: string,
+): LucideIcon {
   return iconRegistry[iconName] ?? Folder;
 }

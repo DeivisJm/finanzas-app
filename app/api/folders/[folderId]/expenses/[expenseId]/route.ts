@@ -91,14 +91,9 @@ export async function PATCH(
         id: parsedExpenseId,
       },
       data: {
-        description: validationResult.data.description,
-        amount: validationResult.data.amount,
-        expenseDate: validationResult.data.expenseDate
-          ? new Date(
-              `${validationResult.data.expenseDate}T12:00:00`,
-            )
-          : undefined,
-      },
+  description: validationResult.data.description,
+  amount: validationResult.data.amount,
+},
     });
 
     return NextResponse.json(updatedExpense);

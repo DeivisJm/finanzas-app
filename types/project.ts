@@ -10,3 +10,17 @@ export interface ProjectSummary {
   expenseCount: number;
   totalAmount: number;
 }
+
+export interface CreateProjectInput {
+  name: string;
+  description?: string;
+  color: string;
+  icon: string;
+}
+
+export interface UpdateProjectInput {
+  name: string;
+  description?: string;
+  color: string;
+  icon: string;
+}

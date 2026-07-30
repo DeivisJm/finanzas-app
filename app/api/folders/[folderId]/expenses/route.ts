@@ -154,18 +154,16 @@ export async function POST(
       validationResult.data.text,
     );
 
-    const expenseDate = validationResult.data.expenseDate
-      ? new Date(`${validationResult.data.expenseDate}T12:00:00`)
-      : new Date();
+    const expenseDate = new Date();
 
     const expense = await prisma.expense.create({
-      data: {
-        description: parsedExpense.description,
-        amount: parsedExpense.amount,
-        expenseDate,
-        folderId: parsedFolderId,
-      },
-    });
+  data: {
+    description: parsedExpense.description,
+    amount: parsedExpense.amount,
+    expenseDate,
+    folderId: parsedFolderId,
+  },
+});
 
     return NextResponse.json(expense, {
       status: 201,

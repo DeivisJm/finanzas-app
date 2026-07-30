@@ -9,3 +9,16 @@ export interface FolderSummary {
   totalAmount: number;
   createdAt: string;
 }
+
+export interface CreateFolderInput {
+  name: string;
+  color: string;
+  icon: string;
+  projectId: number;
+}
+
+export interface UpdateFolderInput {
+  name: string;
+  color: string;
+  icon: string;
+}

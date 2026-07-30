@@ -1,29 +1,39 @@
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { ProjectCard } from "@/components/projects/project-card";
-import { formatCurrency, formatNumber } from "@/lib/formatters";
+import { ProjectManager } from "@/components/projects/project-manager";
 import { prisma } from "@/lib/prisma";
 import type { ProjectSummary } from "@/types/project";
 import {
-
-  FolderOpen,
   LayoutDashboard,
   Sparkles,
 } from "lucide-react";
 
 /**
- * Loads the projects and calculates their financial summaries.
+ * Loads projects and calculates pending and historical summaries.
  */
-async function getDashboardProjects(): Promise<ProjectSummary[]> {
+async function getDashboardProjects(): Promise<
+  ProjectSummary[]
+> {
   const projects = await prisma.project.findMany({
     orderBy: {
       sortOrder: "asc",
     },
+
     include: {
       folders: {
         select: {
           expenses: {
+            where: {
+              isPaid: false,
+            },
+
             select: {
               amount: true,
+            },
+          },
+
+          _count: {
+            select: {
+              expenses: true,
             },
           },
         },
@@ -32,9 +42,16 @@ async function getDashboardProjects(): Promise<ProjectSummary[]> {
   });
 
   return projects.map((project) => {
-    const expenses = project.folders.flatMap(
+    const pendingExpenses = project.folders.flatMap(
       (folder) => folder.expenses,
     );
+
+    const historicalExpenseCount =
+      project.folders.reduce(
+        (total, folder) =>
+          total + folder._count.expenses,
+        0,
+      );
 
     return {
       id: project.id,
@@ -45,8 +62,8 @@ async function getDashboardProjects(): Promise<ProjectSummary[]> {
       icon: project.icon,
       sortOrder: project.sortOrder,
       folderCount: project.folders.length,
-      expenseCount: expenses.length,
-      totalAmount: expenses.reduce(
+      expenseCount: historicalExpenseCount,
+      totalAmount: pendingExpenses.reduce(
         (total, expense) => total + expense.amount,
         0,
       ),
@@ -56,7 +73,6 @@ async function getDashboardProjects(): Promise<ProjectSummary[]> {
 
 export default async function HomePage() {
   const projects = await getDashboardProjects();
-
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-zinc-50 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
@@ -94,56 +110,14 @@ export default async function HomePage() {
           </h1>
 
           <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 dark:text-zinc-400 sm:text-lg">
-            Organizá tus tarjetas, viajes y proyectos personales
-            mediante carpetas independientes.
+            Organizá tus tarjetas, viajes y proyectos
+            personales mediante carpetas independientes.
           </p>
         </header>
 
-        <section>
-          <div className="mb-6 flex items-end justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                Espacios de trabajo
-              </p>
-
-              <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-                Tus proyectos
-              </h2>
-            </div>
-
-            <p className="hidden text-sm text-zinc-500 sm:block dark:text-zinc-400">
-              {projects.length}{" "}
-              {projects.length === 1 ? "proyecto" : "proyectos"}
-            </p>
-          </div>
-
-          {projects.length > 0 ? (
-            <div className="grid gap-5 md:grid-cols-2">
-              {projects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-[2rem] border border-dashed border-zinc-300 bg-white/70 px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-900/60">
-              <FolderOpen
-                className="mx-auto text-zinc-400"
-                size={38}
-              />
-
-              <h2 className="mt-5 text-lg font-semibold">
-                Todavía no hay proyectos
-              </h2>
-
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-                Ejecutá el seed de Prisma para crear Tarjetas de
-                crédito, Viajes y la carpeta inicial Davivienda.
-              </p>
-            </div>
-          )}
-        </section>
+        <ProjectManager
+          initialProjects={projects}
+        />
       </div>
     </main>
   );

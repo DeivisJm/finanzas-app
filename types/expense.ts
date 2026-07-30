@@ -10,18 +10,8 @@ export interface Expense {
   updatedAt: string;
 }
 
-export interface CreateExpenseInput {
-  text: string;
-  expenseDate?: string;
-}
-
-export interface UpdateExpenseInput {
-  description?: string;
-  amount?: number;
-  expenseDate?: string;
-}
-
-export interface ExpenseSummary {
-  pendingCount: number;
-  pendingAmount: number;
+export interface EditableExpenseData {
+  description: string;
+  amount: number;
+  expenseDate: string;
 }

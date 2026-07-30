@@ -6,11 +6,6 @@ export const createExpenseSchema = z.object({
     .trim()
     .min(3, "Escribí una descripción y un monto.")
     .max(150, "El gasto no puede superar los 150 caracteres."),
-
-  expenseDate: z
-    .string()
-    .date("La fecha del gasto no es válida.")
-    .optional(),
 });
 
 export const updateExpenseSchema = z
@@ -27,17 +22,11 @@ export const updateExpenseSchema = z
       .int("El monto debe ser un número entero.")
       .positive("El monto debe ser mayor que cero.")
       .optional(),
-
-    expenseDate: z
-      .string()
-      .date("La fecha del gasto no es válida.")
-      .optional(),
   })
   .refine(
     (data) =>
       data.description !== undefined ||
-      data.amount !== undefined ||
-      data.expenseDate !== undefined,
+      data.amount !== undefined,
     {
       message: "Debés modificar al menos un campo.",
     },
