@@ -1,5 +1,6 @@
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { ProjectManager } from "@/components/projects/project-manager";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import type { ProjectSummary } from "@/types/project";
 import {
@@ -80,18 +81,25 @@ export default async function HomePage() {
 
       <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <nav className="mb-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-zinc-950 text-white shadow-lg dark:bg-white dark:text-zinc-950">
-              <LayoutDashboard size={22} />
+          <div className="flex items-center gap-4">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl">
+              <Image
+                src="/icon.png"
+                alt="Logo de Wallet Pro"
+                fill
+                priority
+                sizes="56px"
+                className="object-cover"
+              />
             </div>
 
             <div>
-              <p className="font-semibold tracking-tight">
-                Finanzas
-              </p>
+              <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                Wallet Pro
+              </h1>
 
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Panel personal
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Panel financiero
               </p>
             </div>
           </div>

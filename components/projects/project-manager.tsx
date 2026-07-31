@@ -93,7 +93,7 @@ export function ProjectManager({
       if (!response.ok) {
         throw new Error(
           result.message ??
-            "No fue posible eliminar el proyecto.",
+          "No fue posible eliminar el proyecto.",
         );
       }
 
@@ -138,17 +138,20 @@ export function ProjectManager({
                 : "proyectos"}
             </p>
 
-          <button
-  type="button"
-  onClick={openCreateDialog}
-  className="group inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-600 to-blue-600 px-5 text-sm font-semibold text-white shadow-lg shadow-indigo-950/20 transition duration-300 hover:-translate-y-0.5 hover:from-indigo-500 hover:to-blue-500 hover:shadow-xl hover:shadow-indigo-950/30 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 dark:border-indigo-400/20 dark:from-indigo-500 dark:to-blue-500 dark:hover:from-indigo-400 dark:hover:to-blue-400"
->
-  <span className="flex size-7 items-center justify-center rounded-lg bg-white/15 transition group-hover:bg-white/20">
-    <Plus size={16} strokeWidth={2.2} />
-  </span>
+            <button
+              type="button"
+              onClick={openCreateDialog}
+              className="inline-flex h-14 items-center justify-center gap-3 rounded-2xl border border-zinc-900 bg-zinc-900 px-6 text-base font-medium text-white shadow-sm transition-all duration-200 hover:bg-zinc-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:focus-visible:ring-zinc-500 dark:focus-visible:ring-offset-zinc-950"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 dark:bg-black/10">
+                <Plus
+                  className="h-5 w-5"
+                  strokeWidth={2}
+                />
+              </span>
 
-  Nuevo proyecto
-</button>
+              Nuevo proyecto
+            </button>
           </div>
         </div>
 
@@ -197,7 +200,7 @@ export function ProjectManager({
             </button>
           </div>
         )}
-      </section>
+      </section >
 
       <ProjectDialog
         isOpen={isDialogOpen}
@@ -209,9 +212,8 @@ export function ProjectManager({
       <ConfirmDialog
         isOpen={Boolean(projectToDelete)}
         title="Eliminar proyecto"
-        description={`¿Seguro que querés eliminar “${
-          projectToDelete?.name ?? ""
-        }”? También se eliminarán permanentemente todas sus carpetas y los gastos asociados. Esta acción no se puede deshacer.`}
+        description={`¿Seguro que querés eliminar “${projectToDelete?.name ?? ""
+          }”? También se eliminarán permanentemente todas sus carpetas y los gastos asociados. Esta acción no se puede deshacer.`}
         confirmLabel="Eliminar proyecto"
         variant="danger"
         isLoading={isDeleting}
