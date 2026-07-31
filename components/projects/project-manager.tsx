@@ -119,7 +119,7 @@ export function ProjectManager({
   return (
     <>
       <section>
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-12 mb-8 flex flex-col gap-5 sm:mt-16 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
               Espacios de trabajo

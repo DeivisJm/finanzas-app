@@ -1,12 +1,9 @@
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { ProjectManager } from "@/components/projects/project-manager";
-import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import type { ProjectSummary } from "@/types/project";
-import {
-  LayoutDashboard,
-  Sparkles,
-} from "lucide-react";
+import { Sparkles } from "lucide-react";
+import Image from "next/image";
 
 /**
  * Loads projects and calculates pending and historical summaries.
@@ -79,7 +76,20 @@ export default async function HomePage() {
     <main className="relative min-h-screen overflow-hidden bg-zinc-50 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
       <div className="pointer-events-none absolute left-1/2 top-[-18rem] size-[36rem] -translate-x-1/2 rounded-full bg-blue-200/40 blur-3xl dark:bg-blue-950/25" />
 
-      <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div
+        className="
+          relative
+          mx-auto
+          max-w-7xl
+          px-4
+          pb-6
+          pt-[calc(env(safe-area-inset-top)+1.5rem)]
+          sm:px-6
+          sm:pb-8
+          sm:pt-8
+          lg:px-8
+        "
+      >
         <nav className="mb-12 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl">
@@ -107,9 +117,10 @@ export default async function HomePage() {
           <ThemeToggle />
         </nav>
 
-        <header className="mb-10 max-w-3xl">
+        <header>
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-zinc-600 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-300">
             <Sparkles size={14} />
+
             Tu información financiera en un solo lugar
           </div>
 
@@ -123,9 +134,7 @@ export default async function HomePage() {
           </p>
         </header>
 
-        <ProjectManager
-          initialProjects={projects}
-        />
+        <ProjectManager initialProjects={projects} />
       </div>
     </main>
   );

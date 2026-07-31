@@ -92,7 +92,7 @@ export default async function ProjectPage({
         }}
       />
 
-      <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="relative mx-auto max-w-7xl px-4 pb-6 pt-[calc(env(safe-area-inset-top)+2rem)] sm:px-6 sm:py-8 lg:px-8">
         <nav className="mb-12 flex items-center justify-between">
           <Link
             href="/"

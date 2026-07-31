@@ -87,7 +87,7 @@ export function FolderManager({
       if (!response.ok) {
         throw new Error(
           result.message ??
-            "No fue posible eliminar la carpeta.",
+          "No fue posible eliminar la carpeta.",
         );
       }
 
@@ -193,9 +193,8 @@ export function FolderManager({
       <ConfirmDialog
         isOpen={Boolean(folderToDelete)}
         title="Eliminar carpeta"
-        description={`¿Seguro que querés eliminar “${
-          folderToDelete?.name ?? ""
-        }”? Todos los gastos registrados dentro de esta carpeta también se eliminarán permanentemente. Esta acción no se puede deshacer.`}
+        description={`¿Seguro que querés eliminar “${folderToDelete?.name ?? ""
+          }”? Todos los gastos registrados dentro de esta carpeta también se eliminarán permanentemente. Esta acción no se puede deshacer.`}
         confirmLabel="Eliminar carpeta"
         variant="danger"
         isLoading={isDeleting}
