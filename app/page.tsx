@@ -58,11 +58,13 @@ async function getDashboardProjects(): Promise<
       description: project.description,
       color: project.color,
       icon: project.icon,
+      type: project.type,
       sortOrder: project.sortOrder,
       folderCount: project.folders.length,
       expenseCount: historicalExpenseCount,
       totalAmount: pendingExpenses.reduce(
-        (total, expense) => total + expense.amount,
+        (total, expense) =>
+          total + expense.amount,
         0,
       ),
     };

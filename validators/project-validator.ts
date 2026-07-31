@@ -1,11 +1,22 @@
 import { z } from "zod";
 
-const projectFieldsSchema = {
+const projectTypeSchema = z.enum([
+  "STANDARD",
+  "TRIP",
+]);
+
+const projectFormSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, "El nombre debe tener al menos 2 caracteres.")
-    .max(60, "El nombre no puede superar los 60 caracteres."),
+    .min(
+      2,
+      "El nombre debe contener al menos 2 caracteres.",
+    )
+    .max(
+      60,
+      "El nombre no puede superar los 60 caracteres.",
+    ),
 
   description: z
     .string()
@@ -14,36 +25,27 @@ const projectFieldsSchema = {
       160,
       "La descripción no puede superar los 160 caracteres.",
     )
-    .optional()
-    .or(z.literal("")),
+    .default(""),
 
   color: z
     .string()
     .trim()
     .regex(
       /^#[0-9a-fA-F]{6}$/,
-      "El color debe tener formato hexadecimal.",
+      "El color seleccionado no es válido.",
     ),
 
   icon: z
     .string()
     .trim()
-    .min(1, "Seleccioná un ícono.")
-    .max(40, "El identificador del ícono no es válido."),
-};
+    .min(1, "Debés seleccionar un ícono.")
+    .max(50, "El identificador del ícono no es válido."),
 
-export const createProjectSchema = z.object({
-  ...projectFieldsSchema,
+  type: projectTypeSchema,
 });
 
-export const updateProjectSchema = z.object({
-  ...projectFieldsSchema,
-});
+export const createProjectSchema =
+  projectFormSchema;
 
-export type CreateProjectData = z.infer<
-  typeof createProjectSchema
->;
-
-export type UpdateProjectData = z.infer<
-  typeof updateProjectSchema
->;
+export const updateProjectSchema =
+  projectFormSchema;

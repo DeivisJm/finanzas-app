@@ -1,28 +1,26 @@
 "use client";
 
 import {
-  Check,
-  Folder,
-} from "lucide-react";
-
+  PROJECT_COLOR_OPTIONS,
+  PROJECT_ICON_OPTIONS,
+} from "@/components/projects/project-dialog-options";
 import type {
   CreateProjectInput,
   ProjectSummary,
+  ProjectType,
   UpdateProjectInput,
 } from "@/types/project";
 import {
-  BriefcaseBusiness,
-  Building2,
-  CreditCard,
-  GraduationCap,
-  House,
-  Laptop,
+  Check,
+  Folder,
   Plane,
-  ShoppingBag,
-  Target,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 interface ProjectDialogProps {
   isOpen: boolean;
@@ -30,66 +28,6 @@ interface ProjectDialogProps {
   onClose: () => void;
   onSaved: (project: ProjectSummary) => void;
 }
-
-const colorOptions = [
-  "#dc2626",
-  "#ea580c",
-  "#ca8a04",
-  "#16a34a",
-  "#0891b2",
-  "#2563eb",
-  "#7c3aed",
-  "#db2777",
-  "#52525b",
-];
-
-const iconOptions = [
-  {
-    value: "credit-card",
-    label: "Tarjetas",
-    icon: CreditCard,
-  },
-  {
-    value: "plane",
-    label: "Viajes",
-    icon: Plane,
-  },
-  {
-    value: "briefcase-business",
-    label: "Trabajo",
-    icon: BriefcaseBusiness,
-  },
-  {
-    value: "house",
-    label: "Hogar",
-    icon: House,
-  },
-  {
-    value: "graduation",
-    label: "Estudios",
-    icon: GraduationCap,
-  },
-  {
-    value: "shopping",
-    label: "Compras",
-    icon: ShoppingBag,
-  },
-  {
-    value: "laptop",
-    label: "Tecnología",
-    icon: Laptop,
-  },
-  {
-    value: "building",
-    label: "Negocio",
-    icon: Building2,
-  },
-  {
-    value: "target",
-    label: "Meta",
-    icon: Target,
-  },
-];
 
 /**
  * Displays the form used to create or edit a project.
@@ -104,12 +42,28 @@ export function ProjectDialog({
   const [description, setDescription] =
     useState("");
   const [color, setColor] = useState("#2563eb");
-  const [icon, setIcon] = useState("folder");
+  const [icon, setIcon] =
+    useState("credit-card");
+  const [type, setType] =
+    useState<ProjectType>("STANDARD");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
   const isEditing = Boolean(project);
+
+  const selectedIconOption = useMemo(
+    () =>
+      PROJECT_ICON_OPTIONS.find(
+        (option) => option.value === icon,
+      ),
+    [icon],
+  );
+
+  const SelectedIcon =
+    selectedIconOption?.icon ?? Folder;
+
+  const isTripProject = type === "TRIP";
 
   useEffect(() => {
     if (!isOpen) {
@@ -119,10 +73,34 @@ export function ProjectDialog({
     setName(project?.name ?? "");
     setDescription(project?.description ?? "");
     setColor(project?.color ?? "#2563eb");
-    setIcon(project?.icon ?? "folder");
+    setIcon(project?.icon ?? "credit-card");
+    setType(project?.type ?? "STANDARD");
     setError("");
+    setIsSubmitting(false);
   }, [isOpen, project]);
 
+  /**
+   * Selects an icon and synchronizes the functional project type.
+   */
+  function handleIconSelection(
+    selectedIcon: string,
+  ): void {
+    const option = PROJECT_ICON_OPTIONS.find(
+      (iconOption) =>
+        iconOption.value === selectedIcon,
+    );
+
+    if (!option) {
+      return;
+    }
+
+    setIcon(option.value);
+    setType(option.projectType);
+  }
+
+  /**
+   * Persists the project using the create or update endpoint.
+   */
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
   ): Promise<void> {
@@ -139,6 +117,7 @@ export function ProjectDialog({
         description,
         color,
         icon,
+        type,
       };
 
       const response = await fetch(
@@ -156,27 +135,51 @@ export function ProjectDialog({
         },
       );
 
-      const result = await response.json();
+      const result: unknown =
+        await response.json();
+
+      if (
+        typeof result !== "object" ||
+        result === null
+      ) {
+        throw new Error(
+          "El servidor devolvió una respuesta inválida.",
+        );
+      }
+
+      const responseData = result as Partial<
+        ProjectSummary & {
+          message: string;
+        }
+      >;
 
       if (!response.ok) {
         throw new Error(
-          result.message ??
-          "No fue posible guardar el proyecto.",
+          responseData.message ??
+            "No fue posible guardar el proyecto.",
         );
       }
 
       onSaved({
-        ...result,
+        ...(responseData as ProjectSummary),
+
+        type:
+          responseData.type ??
+          project?.type ??
+          type,
+
         folderCount:
-          result.folderCount ??
+          responseData.folderCount ??
           project?.folderCount ??
           0,
+
         expenseCount:
-          result.expenseCount ??
+          responseData.expenseCount ??
           project?.expenseCount ??
           0,
+
         totalAmount:
-          result.totalAmount ??
+          responseData.totalAmount ??
           project?.totalAmount ??
           0,
       });
@@ -197,15 +200,6 @@ export function ProjectDialog({
     return null;
   }
 
-  if (!isOpen) {
-    return null;
-  }
-
-  const SelectedIcon =
-    iconOptions.find(
-      (iconOption) => iconOption.value === icon,
-    )?.icon ?? Folder;
-
   return (
     <div
       role="presentation"
@@ -223,18 +217,19 @@ export function ProjectDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="project-dialog-title"
-        className="relative max-h-[92vh] w-full overflow-hidden rounded-t-[2.25rem] border border-zinc-200/80 bg-white shadow-[0_30px_90px_rgba(0,0,0,0.35)] dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-2xl sm:rounded-[2.25rem]"
+        className="relative max-h-[92dvh] w-full overflow-hidden rounded-t-[2.25rem] border border-zinc-200/80 bg-white shadow-[0_30px_90px_rgba(0,0,0,0.35)] dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-2xl sm:rounded-[2.25rem]"
       >
         <div
+          aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 h-40 opacity-20 blur-3xl"
           style={{
             background: `radial-gradient(circle at top left, ${color}, transparent 65%)`,
           }}
         />
 
-        <div className="relative flex max-h-[92vh] flex-col">
-          <header className="flex items-start justify-between gap-5 border-b border-zinc-200/70 px-6 py-6 dark:border-zinc-800 sm:px-8">
-            <div className="flex items-center gap-4">
+        <div className="relative flex max-h-[92dvh] flex-col">
+          <header className="flex items-start justify-between gap-5 border-b border-zinc-200/70 px-5 py-5 dark:border-zinc-800 sm:px-8 sm:py-6">
+            <div className="flex min-w-0 items-center gap-4">
               <div
                 className="relative flex size-13 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-white shadow-lg"
                 style={{
@@ -242,7 +237,10 @@ export function ProjectDialog({
                   boxShadow: `0 12px 28px ${color}35`,
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/25 to-transparent" />
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 bg-gradient-to-br from-white/25 to-transparent"
+                />
 
                 <SelectedIcon
                   className="relative"
@@ -250,9 +248,9 @@ export function ProjectDialog({
                 />
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <p
-                  className="text-sm font-medium"
+                  className="truncate text-sm font-medium"
                   style={{
                     color,
                   }}
@@ -264,7 +262,7 @@ export function ProjectDialog({
 
                 <h2
                   id="project-dialog-title"
-                  className="mt-1 text-2xl font-semibold tracking-tight"
+                  className="mt-1 truncate text-2xl font-semibold tracking-tight"
                 >
                   {isEditing
                     ? "Editar proyecto"
@@ -286,7 +284,7 @@ export function ProjectDialog({
 
           <form
             onSubmit={handleSubmit}
-            className="overflow-y-auto px-6 py-7 sm:px-8"
+            className="overflow-y-auto px-5 py-6 sm:px-8 sm:py-7"
           >
             <div className="space-y-7">
               <div className="grid gap-5 sm:grid-cols-[1fr_12rem]">
@@ -305,12 +303,14 @@ export function ProjectDialog({
                     onChange={(event) =>
                       setName(event.target.value)
                     }
-                    placeholder="Ejemplo: Gastos del hogar"
+                    placeholder="Ejemplo: Viajes personales"
                     required
                     minLength={2}
                     maxLength={60}
                     autoFocus
-                    className="h-13 w-full rounded-2xl border border-zinc-300 bg-zinc-100 px-4 text-base text-zinc-950 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:bg-zinc-100 focus:ring-2 focus:ring-zinc-400/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:bg-zinc-950 dark:focus:ring-zinc-500/30" />
+                    disabled={isSubmitting}
+                    className="h-13 w-full rounded-2xl border border-zinc-300 bg-zinc-100 px-4 text-base text-zinc-950 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-400/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/30"
+                  />
                 </div>
 
                 <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-950">
@@ -328,9 +328,18 @@ export function ProjectDialog({
                       <SelectedIcon size={18} />
                     </div>
 
-                    <p className="truncate text-sm font-semibold">
-                      {name.trim() || "Nuevo proyecto"}
-                    </p>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">
+                        {name.trim() ||
+                          "Nuevo proyecto"}
+                      </p>
+
+                      <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                        {isTripProject
+                          ? "Espacio de viajes"
+                          : "Espacio estándar"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -353,84 +362,130 @@ export function ProjectDialog({
                   id="project-description"
                   value={description}
                   onChange={(event) =>
-                    setDescription(event.target.value)
+                    setDescription(
+                      event.target.value,
+                    )
                   }
                   placeholder="Explicá brevemente qué vas a organizar en este proyecto."
                   maxLength={160}
                   rows={3}
-className="min-h-24 w-full resize-none rounded-2xl border border-zinc-300 bg-zinc-100 px-4 py-3 text-base text-zinc-950 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:bg-zinc-100 focus:ring-2 focus:ring-zinc-400/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:bg-zinc-950 dark:focus:ring-zinc-500/30"                />
+                  disabled={isSubmitting}
+                  className="min-h-24 w-full resize-none rounded-2xl border border-zinc-300 bg-zinc-100 px-4 py-3 text-base text-zinc-950 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-400/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/30"
+                />
               </div>
 
-              <fieldset>
+              <fieldset disabled={isSubmitting}>
                 <legend className="mb-3 text-sm font-semibold">
                   Color del proyecto
                 </legend>
 
                 <div className="flex flex-wrap gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950">
-                  {colorOptions.map((colorOption) => (
-                    <button
-                      key={colorOption}
-                      type="button"
-                      onClick={() => setColor(colorOption)}
-                      aria-label={`Seleccionar color ${colorOption}`}
-                      className={`relative size-10 rounded-full transition duration-200 hover:scale-110 ${color === colorOption
-                          ? "ring-2 ring-zinc-950 ring-offset-3 ring-offset-zinc-50 dark:ring-white dark:ring-offset-zinc-950"
-                          : ""
-                        }`}
-                      style={{
-                        backgroundColor: colorOption,
-                      }}
-                    >
-                      {color === colorOption ? (
-                        <span className="absolute inset-0 flex items-center justify-center text-white">
-                          <Check size={17} strokeWidth={3} />
-                        </span>
-                      ) : null}
-                    </button>
-                  ))}
+                  {PROJECT_COLOR_OPTIONS.map(
+                    (colorOption) => {
+                      const isSelected =
+                        color === colorOption;
+
+                      return (
+                        <button
+                          key={colorOption}
+                          type="button"
+                          onClick={() =>
+                            setColor(colorOption)
+                          }
+                          aria-label={`Seleccionar color ${colorOption}`}
+                          aria-pressed={isSelected}
+                          className={`relative size-10 rounded-full transition duration-200 hover:scale-110 ${
+                            isSelected
+                              ? "ring-2 ring-zinc-950 ring-offset-3 ring-offset-zinc-50 dark:ring-white dark:ring-offset-zinc-950"
+                              : ""
+                          }`}
+                          style={{
+                            backgroundColor:
+                              colorOption,
+                          }}
+                        >
+                          {isSelected ? (
+                            <span className="absolute inset-0 flex items-center justify-center text-white">
+                              <Check
+                                size={17}
+                                strokeWidth={3}
+                              />
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    },
+                  )}
                 </div>
               </fieldset>
 
-              <fieldset>
+              <fieldset disabled={isSubmitting}>
                 <legend className="mb-3 text-sm font-semibold">
-                  Ícono
+                  Tipo e ícono
                 </legend>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {iconOptions.map((iconOption) => {
-                    const Icon = iconOption.icon;
-                    const selected =
-                      icon === iconOption.value;
+                  {PROJECT_ICON_OPTIONS.map(
+                    (iconOption) => {
+                      const Icon = iconOption.icon;
+                      const isSelected =
+                        icon === iconOption.value;
 
-                    return (
-                      <button
-                        key={iconOption.value}
-                        type="button"
-                        onClick={() =>
-                          setIcon(iconOption.value)
-                        }
-                        className={`group flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition duration-200 ${selected
-                            ? "border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm dark:border-indigo-400 dark:bg-indigo-950/50 dark:text-indigo-300"
-                            : "border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300 hover:bg-white dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-900"
+                      return (
+                        <button
+                          key={iconOption.value}
+                          type="button"
+                          onClick={() =>
+                            handleIconSelection(
+                              iconOption.value,
+                            )
+                          }
+                          aria-pressed={isSelected}
+                          className={`group flex min-w-0 items-center gap-3 rounded-2xl border px-3 py-3 text-left transition duration-200 sm:px-4 ${
+                            isSelected
+                              ? "border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm dark:border-indigo-400 dark:bg-indigo-950/50 dark:text-indigo-300"
+                              : "border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300 hover:bg-white dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-900"
                           }`}
-                      >
-                        <div
-                          className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition ${selected
-                              ? "bg-indigo-600 text-white dark:bg-indigo-500"
-                              : "bg-zinc-200 text-zinc-600 group-hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300"
-                            }`}
                         >
-                          <Icon size={17} />
-                        </div>
+                          <div
+                            className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition ${
+                              isSelected
+                                ? "bg-indigo-600 text-white dark:bg-indigo-500"
+                                : "bg-zinc-200 text-zinc-600 group-hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300"
+                            }`}
+                          >
+                            <Icon size={17} />
+                          </div>
 
-                        <span className="text-sm font-medium">
-                          {iconOption.label}
-                        </span>
-                      </button>
-                    );
-                  })}
+                          <span className="truncate text-sm font-medium">
+                            {iconOption.label}
+                          </span>
+                        </button>
+                      );
+                    },
+                  )}
                 </div>
               </fieldset>
+
+              {isTripProject ? (
+                <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-900 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-200">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white dark:bg-blue-500">
+                    <Plane size={17} />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold">
+                      Proyecto de viaje
+                    </p>
+
+                    <p className="mt-1 text-sm leading-6 text-blue-800/80 dark:text-blue-300/80">
+                      Sus carpetas utilizarán monedas,
+                      conversiones y compras específicas
+                      de viaje.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
 
               {error ? (
                 <p
@@ -455,7 +510,7 @@ className="min-h-24 w-full resize-none rounded-2xl border border-zinc-300 bg-zin
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 px-6 text-sm font-semibold text-white shadow-lg shadow-indigo-950/20 transition hover:-translate-y-0.5 hover:from-indigo-500 hover:to-blue-500 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-6 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-zinc-800 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
               >
                 {isSubmitting
                   ? "Guardando..."

@@ -10,18 +10,21 @@ interface ProjectRouteContext {
 }
 
 /**
- * Converts a route parameter into a valid identifier.
+ * Parses and validates a numeric route identifier.
  */
-function parseIdentifier(value: string): number | null {
+function parseIdentifier(
+  value: string,
+): number | null {
   const identifier = Number(value);
 
-  return Number.isInteger(identifier) && identifier > 0
+  return Number.isInteger(identifier) &&
+    identifier > 0
     ? identifier
     : null;
 }
 
 /**
- * Updates an existing project.
+ * Updates an existing project and its functional type.
  */
 export async function PATCH(
   request: Request,
@@ -29,6 +32,7 @@ export async function PATCH(
 ) {
   try {
     const { projectId } = await context.params;
+
     const parsedProjectId =
       parseIdentifier(projectId);
 
@@ -45,6 +49,7 @@ export async function PATCH(
     }
 
     const body: unknown = await request.json();
+
     const validationResult =
       updateProjectSchema.safeParse(body);
 
@@ -69,6 +74,12 @@ export async function PATCH(
 
         select: {
           id: true,
+          type: true,
+          _count: {
+            select: {
+              folders: true,
+            },
+          },
         },
       });
 
@@ -84,8 +95,32 @@ export async function PATCH(
       );
     }
 
-    const { name, description, color, icon } =
-      validationResult.data;
+    const {
+      name,
+      description,
+      color,
+      icon,
+      type,
+    } = validationResult.data;
+
+    /*
+     * A project with existing folders cannot switch domains because
+     * standard and travel folders use different financial workflows.
+     */
+    if (
+      existingProject.type !== type &&
+      existingProject._count.folders > 0
+    ) {
+      return NextResponse.json(
+        {
+          message:
+            "No podés cambiar el tipo de un proyecto que ya contiene carpetas.",
+        },
+        {
+          status: 409,
+        },
+      );
+    }
 
     const slug = createSlug(name);
 
@@ -139,16 +174,21 @@ export async function PATCH(
         description: description || null,
         color,
         icon,
+        type,
       },
     });
 
     return NextResponse.json(project);
   } catch (error: unknown) {
-    console.error("Failed to update project:", error);
+    console.error(
+      "Failed to update project:",
+      error,
+    );
 
     return NextResponse.json(
       {
-        message: "No fue posible actualizar el proyecto.",
+        message:
+          "No fue posible actualizar el proyecto.",
       },
       {
         status: 500,
@@ -158,7 +198,7 @@ export async function PATCH(
 }
 
 /**
- * Deletes a project, its folders and their expenses.
+ * Deletes a project and all resources related through cascade rules.
  */
 export async function DELETE(
   _request: Request,
@@ -166,6 +206,7 @@ export async function DELETE(
 ) {
   try {
     const { projectId } = await context.params;
+
     const parsedProjectId =
       parseIdentifier(projectId);
 
@@ -210,14 +251,19 @@ export async function DELETE(
     });
 
     return NextResponse.json({
-      message: "Proyecto eliminado correctamente.",
+      message:
+        "Proyecto eliminado correctamente.",
     });
   } catch (error: unknown) {
-    console.error("Failed to delete project:", error);
+    console.error(
+      "Failed to delete project:",
+      error,
+    );
 
     return NextResponse.json(
       {
-        message: "No fue posible eliminar el proyecto.",
+        message:
+          "No fue posible eliminar el proyecto.",
       },
       {
         status: 500,

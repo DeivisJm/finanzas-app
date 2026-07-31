@@ -4,7 +4,7 @@ import { createProjectSchema } from "@/validators/project-validator";
 import { NextResponse } from "next/server";
 
 /**
- * Returns all projects with their pending and historical summaries.
+ * Returns every project with its pending and historical summaries.
  */
 export async function GET() {
   try {
@@ -48,6 +48,11 @@ export async function GET() {
           0,
         );
 
+      const totalAmount = pendingExpenses.reduce(
+        (total, expense) => total + expense.amount,
+        0,
+      );
+
       return {
         id: project.id,
         name: project.name,
@@ -55,23 +60,25 @@ export async function GET() {
         description: project.description,
         color: project.color,
         icon: project.icon,
+        type: project.type,
         sortOrder: project.sortOrder,
         folderCount: project.folders.length,
         expenseCount: historicalExpenseCount,
-        totalAmount: pendingExpenses.reduce(
-          (total, expense) => total + expense.amount,
-          0,
-        ),
+        totalAmount,
       };
     });
 
     return NextResponse.json(response);
   } catch (error: unknown) {
-    console.error("Failed to retrieve projects:", error);
+    console.error(
+      "Failed to retrieve projects:",
+      error,
+    );
 
     return NextResponse.json(
       {
-        message: "No fue posible obtener los proyectos.",
+        message:
+          "No fue posible obtener los proyectos.",
       },
       {
         status: 500,
@@ -81,11 +88,12 @@ export async function GET() {
 }
 
 /**
- * Creates a new project.
+ * Creates a project with its functional project type.
  */
 export async function POST(request: Request) {
   try {
     const body: unknown = await request.json();
+
     const validationResult =
       createProjectSchema.safeParse(body);
 
@@ -102,8 +110,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, description, color, icon } =
-      validationResult.data;
+    const {
+      name,
+      description,
+      color,
+      icon,
+      type,
+    } = validationResult.data;
 
     const slug = createSlug(name);
 
@@ -142,15 +155,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const lastProject = await prisma.project.findFirst({
-      orderBy: {
-        sortOrder: "desc",
-      },
+    const lastProject =
+      await prisma.project.findFirst({
+        orderBy: {
+          sortOrder: "desc",
+        },
 
-      select: {
-        sortOrder: true,
-      },
-    });
+        select: {
+          sortOrder: true,
+        },
+      });
 
     const project = await prisma.project.create({
       data: {
@@ -159,7 +173,9 @@ export async function POST(request: Request) {
         description: description || null,
         color,
         icon,
-        sortOrder: (lastProject?.sortOrder ?? 0) + 1,
+        type,
+        sortOrder:
+          (lastProject?.sortOrder ?? 0) + 1,
       },
     });
 
@@ -175,11 +191,15 @@ export async function POST(request: Request) {
       },
     );
   } catch (error: unknown) {
-    console.error("Failed to create project:", error);
+    console.error(
+      "Failed to create project:",
+      error,
+    );
 
     return NextResponse.json(
       {
-        message: "No fue posible crear el proyecto.",
+        message:
+          "No fue posible crear el proyecto.",
       },
       {
         status: 500,
