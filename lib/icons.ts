@@ -1,46 +1,41 @@
-import {
-  BriefcaseBusiness,
-  Building2,
-  CircleDollarSign,
-  CreditCard,
-  Folder,
-  GraduationCap,
-  House,
-  Landmark,
-  Laptop,
-  Plane,
-  ReceiptText,
-  ShoppingBag,
-  Target,
-  WalletCards,
-  type LucideIcon,
-} from "lucide-react";
+export const APP_ICON_NAMES = [
+  "briefcase-business",
+  "building",
+  "circle-dollar-sign",
+  "credit-card",
+  "folder",
+  "graduation",
+  "house",
+  "landmark",
+  "laptop",
+  "plane",
+  "receipt-text",
+  "shopping",
+  "target",
+  "wallet-cards",
+] as const;
+
+export type AppIconName =
+  (typeof APP_ICON_NAMES)[number];
 
 /**
- * Associates trusted icon identifiers with Lucide components.
+ * Checks whether a persisted value is a supported application icon.
  */
-const iconRegistry: Record<string, LucideIcon> = {
-  "briefcase-business": BriefcaseBusiness,
-  building: Building2,
-  "circle-dollar-sign": CircleDollarSign,
-  "credit-card": CreditCard,
-  folder: Folder,
-  graduation: GraduationCap,
-  house: House,
-  landmark: Landmark,
-  laptop: Laptop,
-  plane: Plane,
-  "receipt-text": ReceiptText,
-  shopping: ShoppingBag,
-  target: Target,
-  "wallet-cards": WalletCards,
-};
+export function isAppIconName(
+  value: string,
+): value is AppIconName {
+  return APP_ICON_NAMES.includes(
+    value as AppIconName,
+  );
+}
 
 /**
- * Returns the registered icon or a generic folder icon.
+ * Returns a safe icon identifier for values loaded from persistence.
  */
-export function getIconComponent(
-  iconName: string,
-): LucideIcon {
-  return iconRegistry[iconName] ?? Folder;
+export function normalizeAppIconName(
+  value: string,
+): AppIconName {
+  return isAppIconName(value)
+    ? value
+    : "folder";
 }

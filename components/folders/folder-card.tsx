@@ -1,7 +1,7 @@
 "use client";
 
 import { formatCurrency } from "@/lib/formatters";
-import { getIconComponent } from "@/lib/icons";
+import { AppIcon } from "@/components/ui/app-icon";
 import type { FolderSummary } from "@/types/folder";
 import {
   ArrowUpRight,
@@ -32,8 +32,6 @@ export function FolderCard({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
-
-  const FolderIcon = getIconComponent(folder.icon);
 
   const folderHref = `/projects/${projectSlug}/${folder.slug}`;
 
@@ -161,7 +159,8 @@ export function FolderCard({
                 backgroundColor: folder.color,
               }}
             >
-              <FolderIcon
+              <AppIcon
+                name={folder.icon}
                 size={22}
                 strokeWidth={1.9}
               />

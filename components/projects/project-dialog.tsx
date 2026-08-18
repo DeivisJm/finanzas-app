@@ -4,6 +4,7 @@ import {
   PROJECT_COLOR_OPTIONS,
   PROJECT_ICON_OPTIONS,
 } from "@/components/projects/project-dialog-options";
+import { AppIcon } from "@/components/ui/app-icon";
 import type {
   CreateProjectInput,
   ProjectSummary,
@@ -12,25 +13,30 @@ import type {
 } from "@/types/project";
 import {
   Check,
-  Folder,
   Plane,
   X,
 } from "lucide-react";
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useState } from "react";
 
 interface ProjectDialogProps {
   isOpen: boolean;
   project?: ProjectSummary | null;
   onClose: () => void;
-  onSaved: (project: ProjectSummary) => void;
+  onSaved: (
+    project: ProjectSummary,
+  ) => void;
+}
+
+interface ProjectDialogContentProps {
+  project?: ProjectSummary | null;
+  onClose: () => void;
+  onSaved: (
+    project: ProjectSummary,
+  ) => void;
 }
 
 /**
- * Displays the form used to create or edit a project.
+ * Mounts a fresh form for each create or edit operation.
  */
 export function ProjectDialog({
   isOpen,
@@ -38,57 +44,70 @@ export function ProjectDialog({
   onClose,
   onSaved,
 }: ProjectDialogProps) {
-  const [name, setName] = useState("");
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <ProjectDialogContent
+      key={project?.id ?? "new-project"}
+      project={project}
+      onClose={onClose}
+      onSaved={onSaved}
+    />
+  );
+}
+
+/**
+ * Displays the form used to create or edit a project.
+ */
+function ProjectDialogContent({
+  project,
+  onClose,
+  onSaved,
+}: ProjectDialogContentProps) {
+  const [name, setName] = useState(
+    project?.name ?? "",
+  );
+
   const [description, setDescription] =
-    useState("");
-  const [color, setColor] = useState("#2563eb");
-  const [icon, setIcon] =
-    useState("credit-card");
+    useState(
+      project?.description ?? "",
+    );
+
+  const [color, setColor] = useState(
+    project?.color ?? "#2563eb",
+  );
+
+  const [icon, setIcon] = useState(
+    project?.icon ?? "credit-card",
+  );
+
   const [type, setType] =
-    useState<ProjectType>("STANDARD");
+    useState<ProjectType>(
+      project?.type ?? "STANDARD",
+    );
+
   const [error, setError] = useState("");
+
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
   const isEditing = Boolean(project);
-
-  const selectedIconOption = useMemo(
-    () =>
-      PROJECT_ICON_OPTIONS.find(
-        (option) => option.value === icon,
-      ),
-    [icon],
-  );
-
-  const SelectedIcon =
-    selectedIconOption?.icon ?? Folder;
-
   const isTripProject = type === "TRIP";
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    setName(project?.name ?? "");
-    setDescription(project?.description ?? "");
-    setColor(project?.color ?? "#2563eb");
-    setIcon(project?.icon ?? "credit-card");
-    setType(project?.type ?? "STANDARD");
-    setError("");
-    setIsSubmitting(false);
-  }, [isOpen, project]);
-
   /**
-   * Selects an icon and synchronizes the functional project type.
+   * Selects an icon and synchronizes its functional project type.
    */
   function handleIconSelection(
     selectedIcon: string,
   ): void {
-    const option = PROJECT_ICON_OPTIONS.find(
-      (iconOption) =>
-        iconOption.value === selectedIcon,
-    );
+    const option =
+      PROJECT_ICON_OPTIONS.find(
+        (iconOption) =>
+          iconOption.value ===
+          selectedIcon,
+      );
 
     if (!option) {
       return;
@@ -125,10 +144,13 @@ export function ProjectDialog({
           ? `/api/projects/${project?.id}`
           : "/api/projects",
         {
-          method: isEditing ? "PATCH" : "POST",
+          method: isEditing
+            ? "PATCH"
+            : "POST",
 
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
 
           body: JSON.stringify(payload),
@@ -147,11 +169,12 @@ export function ProjectDialog({
         );
       }
 
-      const responseData = result as Partial<
-        ProjectSummary & {
-          message: string;
-        }
-      >;
+      const responseData =
+        result as Partial<
+          ProjectSummary & {
+            message: string;
+          }
+        >;
 
       if (!response.ok) {
         throw new Error(
@@ -196,17 +219,14 @@ export function ProjectDialog({
     }
   }
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
     <div
       role="presentation"
       className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/75 p-0 backdrop-blur-md sm:items-center sm:p-5"
       onMouseDown={(event) => {
         if (
-          event.target === event.currentTarget &&
+          event.target ===
+            event.currentTarget &&
           !isSubmitting
         ) {
           onClose();
@@ -242,7 +262,8 @@ export function ProjectDialog({
                   className="absolute inset-0 bg-gradient-to-br from-white/25 to-transparent"
                 />
 
-                <SelectedIcon
+                <AppIcon
+                  name={icon}
                   className="relative"
                   size={23}
                 />
@@ -251,9 +272,7 @@ export function ProjectDialog({
               <div className="min-w-0">
                 <p
                   className="truncate text-sm font-medium"
-                  style={{
-                    color,
-                  }}
+                  style={{ color }}
                 >
                   {isEditing
                     ? "Configuración del espacio"
@@ -301,7 +320,9 @@ export function ProjectDialog({
                     type="text"
                     value={name}
                     onChange={(event) =>
-                      setName(event.target.value)
+                      setName(
+                        event.target.value,
+                      )
                     }
                     placeholder="Ejemplo: Viajes personales"
                     required
@@ -309,7 +330,7 @@ export function ProjectDialog({
                     maxLength={60}
                     autoFocus
                     disabled={isSubmitting}
-                    className="h-13 w-full rounded-2xl border border-zinc-300 bg-zinc-100 px-4 text-base text-zinc-950 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-400/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/30"
+                    className="h-13 w-full rounded-2xl border border-zinc-300 bg-zinc-100 px-4 text-base text-zinc-950 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-400/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                   />
                 </div>
 
@@ -325,7 +346,10 @@ export function ProjectDialog({
                         backgroundColor: color,
                       }}
                     >
-                      <SelectedIcon size={18} />
+                      <AppIcon
+                        name={icon}
+                        size={18}
+                      />
                     </div>
 
                     <div className="min-w-0">
@@ -370,7 +394,7 @@ export function ProjectDialog({
                   maxLength={160}
                   rows={3}
                   disabled={isSubmitting}
-                  className="min-h-24 w-full resize-none rounded-2xl border border-zinc-300 bg-zinc-100 px-4 py-3 text-base text-zinc-950 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-400/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/30"
+                  className="min-h-24 w-full resize-none rounded-2xl border border-zinc-300 bg-zinc-100 px-4 py-3 text-base text-zinc-950 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-400/30 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                 />
               </div>
 
@@ -382,7 +406,7 @@ export function ProjectDialog({
                 <div className="flex flex-wrap gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950">
                   {PROJECT_COLOR_OPTIONS.map(
                     (colorOption) => {
-                      const isSelected =
+                      const selected =
                         color === colorOption;
 
                       return (
@@ -390,12 +414,16 @@ export function ProjectDialog({
                           key={colorOption}
                           type="button"
                           onClick={() =>
-                            setColor(colorOption)
+                            setColor(
+                              colorOption,
+                            )
                           }
                           aria-label={`Seleccionar color ${colorOption}`}
-                          aria-pressed={isSelected}
+                          aria-pressed={
+                            selected
+                          }
                           className={`relative size-10 rounded-full transition duration-200 hover:scale-110 ${
-                            isSelected
+                            selected
                               ? "ring-2 ring-zinc-950 ring-offset-3 ring-offset-zinc-50 dark:ring-white dark:ring-offset-zinc-950"
                               : ""
                           }`}
@@ -404,11 +432,13 @@ export function ProjectDialog({
                               colorOption,
                           }}
                         >
-                          {isSelected ? (
+                          {selected ? (
                             <span className="absolute inset-0 flex items-center justify-center text-white">
                               <Check
                                 size={17}
-                                strokeWidth={3}
+                                strokeWidth={
+                                  3
+                                }
                               />
                             </span>
                           ) : null}
@@ -427,38 +457,49 @@ export function ProjectDialog({
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {PROJECT_ICON_OPTIONS.map(
                     (iconOption) => {
-                      const Icon = iconOption.icon;
-                      const isSelected =
-                        icon === iconOption.value;
+                      const selected =
+                        icon ===
+                        iconOption.value;
 
                       return (
                         <button
-                          key={iconOption.value}
+                          key={
+                            iconOption.value
+                          }
                           type="button"
                           onClick={() =>
                             handleIconSelection(
                               iconOption.value,
                             )
                           }
-                          aria-pressed={isSelected}
+                          aria-pressed={
+                            selected
+                          }
                           className={`group flex min-w-0 items-center gap-3 rounded-2xl border px-3 py-3 text-left transition duration-200 sm:px-4 ${
-                            isSelected
+                            selected
                               ? "border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm dark:border-indigo-400 dark:bg-indigo-950/50 dark:text-indigo-300"
-                              : "border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300 hover:bg-white dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-900"
+                              : "border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300 hover:bg-white dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300"
                           }`}
                         >
                           <div
                             className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition ${
-                              isSelected
+                              selected
                                 ? "bg-indigo-600 text-white dark:bg-indigo-500"
-                                : "bg-zinc-200 text-zinc-600 group-hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300"
+                                : "bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
                             }`}
                           >
-                            <Icon size={17} />
+                            <AppIcon
+                              name={
+                                iconOption.value
+                              }
+                              size={17}
+                            />
                           </div>
 
                           <span className="truncate text-sm font-medium">
-                            {iconOption.label}
+                            {
+                              iconOption.label
+                            }
                           </span>
                         </button>
                       );
@@ -479,9 +520,10 @@ export function ProjectDialog({
                     </p>
 
                     <p className="mt-1 text-sm leading-6 text-blue-800/80 dark:text-blue-300/80">
-                      Sus carpetas utilizarán monedas,
-                      conversiones y compras específicas
-                      de viaje.
+                      Sus carpetas utilizarán
+                      monedas, conversiones y
+                      compras específicas de
+                      viaje.
                     </p>
                   </div>
                 </div>

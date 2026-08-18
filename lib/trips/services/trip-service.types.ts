@@ -13,3 +13,29 @@ export interface AddTripFundingInput {
   note?: string | null;
   fundingDate?: Date;
 }
+
+export interface ConvertCurrencyInput {
+  folderId: number;
+  fromCurrencyCode: string;
+  toCurrencyCode: string;
+  fromAmount: DecimalInput;
+  toAmount: DecimalInput;
+  note?: string | null;
+  conversionDate?: Date;
+}
+
+export interface CreateTripExpenseInput {
+  folderId: number;
+  currencyCode: string;
+  amount: DecimalInput;
+  description: string;
+  category: string;
+  note?: string | null;
+  expenseDate?: Date;
+}
+
+export interface PreviewTripPriceInput {
+  folderId: number;
+  currencyCode: string;
+  amount: DecimalInput;
+}

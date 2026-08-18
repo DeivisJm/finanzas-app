@@ -4,7 +4,7 @@ import {
   formatCurrency,
   formatNumber,
 } from "@/lib/formatters";
-import { getIconComponent } from "@/lib/icons";
+import { AppIcon } from "@/components/ui/app-icon";
 import type { ProjectSummary } from "@/types/project";
 import {
   ArrowUpRight,
@@ -40,8 +40,6 @@ export function ProjectCard({
 
   const [isMenuOpen, setIsMenuOpen] =
     useState(false);
-
-  const ProjectIcon = getIconComponent(project.icon);
 
   const projectHref = `/projects/${project.slug}`;
 
@@ -256,7 +254,8 @@ export function ProjectCard({
               "
             />
 
-            <ProjectIcon
+            <AppIcon
+              name={project.icon}
               className="relative"
               size={27}
               strokeWidth={1.8}

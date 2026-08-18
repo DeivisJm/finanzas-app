@@ -1,20 +1,13 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/app-icon";
 import type {
   CreateFolderInput,
   FolderSummary,
   UpdateFolderInput,
 } from "@/types/folder";
-import {
-  CreditCard,
-  Folder,
-  Landmark,
-  Plane,
-  ReceiptText,
-  WalletCards,
-  X,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { useState } from "react";
 
 interface FolderDialogProps {
   isOpen: boolean;
@@ -24,7 +17,14 @@ interface FolderDialogProps {
   onSaved: (folder: FolderSummary) => void;
 }
 
-const colorOptions = [
+interface FolderDialogContentProps {
+  projectId: number;
+  folder?: FolderSummary | null;
+  onClose: () => void;
+  onSaved: (folder: FolderSummary) => void;
+}
+
+const COLOR_OPTIONS = [
   "#dc2626",
   "#ea580c",
   "#ca8a04",
@@ -34,43 +34,37 @@ const colorOptions = [
   "#7c3aed",
   "#db2777",
   "#52525b",
-];
+] as const;
 
-const iconOptions = [
+const ICON_OPTIONS = [
   {
     value: "credit-card",
     label: "Tarjeta",
-    icon: CreditCard,
   },
   {
     value: "landmark",
     label: "Banco",
-    icon: Landmark,
   },
   {
     value: "wallet-cards",
     label: "Billetera",
-    icon: WalletCards,
   },
   {
     value: "receipt-text",
     label: "Cuenta",
-    icon: ReceiptText,
   },
   {
     value: "plane",
     label: "Viaje",
-    icon: Plane,
   },
   {
     value: "folder",
     label: "Carpeta",
-    icon: Folder,
   },
-];
+] as const;
 
 /**
- * Displays the create and edit folder form.
+ * Mounts a fresh form whenever a folder dialog is opened.
  */
 export function FolderDialog({
   isOpen,
@@ -79,25 +73,48 @@ export function FolderDialog({
   onClose,
   onSaved,
 }: FolderDialogProps) {
-  const [name, setName] = useState("");
-  const [color, setColor] = useState("#2563eb");
-  const [icon, setIcon] = useState("credit-card");
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <FolderDialogContent
+      key={folder?.id ?? "new-folder"}
+      projectId={projectId}
+      folder={folder}
+      onClose={onClose}
+      onSaved={onSaved}
+    />
+  );
+}
+
+/**
+ * Displays the create and edit folder form.
+ */
+function FolderDialogContent({
+  projectId,
+  folder,
+  onClose,
+  onSaved,
+}: FolderDialogContentProps) {
+  const [name, setName] = useState(
+    folder?.name ?? "",
+  );
+
+  const [color, setColor] = useState(
+    folder?.color ?? "#2563eb",
+  );
+
+  const [icon, setIcon] = useState(
+    folder?.icon ?? "credit-card",
+  );
+
   const [error, setError] = useState("");
+
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
   const isEditing = Boolean(folder);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    setName(folder?.name ?? "");
-    setColor(folder?.color ?? "#2563eb");
-    setIcon(folder?.icon ?? "credit-card");
-    setError("");
-  }, [folder, isOpen]);
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
@@ -149,18 +166,23 @@ export function FolderDialog({
 
       onSaved({
         ...result,
+
         expenseCount:
           result.expenseCount ??
           folder?.expenseCount ??
           0,
+
         totalAmount:
           result.totalAmount ??
           folder?.totalAmount ??
           0,
+
         createdAt:
           typeof result.createdAt === "string"
             ? result.createdAt
-            : new Date(result.createdAt).toISOString(),
+            : new Date(
+                result.createdAt,
+              ).toISOString(),
       });
 
       onClose();
@@ -175,16 +197,15 @@ export function FolderDialog({
     }
   }
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
     <div
       role="presentation"
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
+        if (
+          event.target === event.currentTarget &&
+          !isSubmitting
+        ) {
           onClose();
         }
       }}
@@ -193,7 +214,7 @@ export function FolderDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="folder-dialog-title"
-        className="max-h-[92vh] w-full overflow-y-auto rounded-t-[2rem] border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-lg sm:rounded-[2rem]"
+        className="max-h-[92dvh] w-full overflow-y-auto rounded-t-[2rem] border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-lg sm:rounded-[2rem]"
       >
         <div className="mb-7 flex items-start justify-between gap-4">
           <div>
@@ -216,7 +237,8 @@ export function FolderDialog({
           <button
             type="button"
             onClick={onClose}
-            className="flex size-10 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-800 dark:hover:text-white"
+            disabled={isSubmitting}
+            className="flex size-10 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-white"
             aria-label="Cerrar formulario"
           >
             <X size={20} />
@@ -247,64 +269,81 @@ export function FolderDialog({
               required
               minLength={2}
               maxLength={50}
-              className="h-12 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 text-sm outline-none transition placeholder:text-zinc-400 focus:border-zinc-950 focus:bg-white focus:ring-4 focus:ring-zinc-950/5 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-white dark:focus:bg-zinc-950"
+              disabled={isSubmitting}
+              className="h-12 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 text-sm outline-none transition placeholder:text-zinc-400 focus:border-zinc-950 focus:bg-white focus:ring-4 focus:ring-zinc-950/5 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-white dark:focus:bg-zinc-950"
             />
           </div>
 
-          <fieldset>
+          <fieldset disabled={isSubmitting}>
             <legend className="mb-3 text-sm font-medium">
               Color
             </legend>
 
             <div className="flex flex-wrap gap-3">
-              {colorOptions.map((colorOption) => (
-                <button
-                  key={colorOption}
-                  type="button"
-                  onClick={() => setColor(colorOption)}
-                  aria-label={`Seleccionar color ${colorOption}`}
-                  className={`size-10 rounded-full border-4 transition hover:scale-105 ${
-                    color === colorOption
-                      ? "border-zinc-950 dark:border-white"
-                      : "border-transparent"
-                  }`}
-                  style={{
-                    backgroundColor: colorOption,
-                  }}
-                />
-              ))}
+              {COLOR_OPTIONS.map(
+                (colorOption) => (
+                  <button
+                    key={colorOption}
+                    type="button"
+                    onClick={() =>
+                      setColor(colorOption)
+                    }
+                    aria-label={`Seleccionar color ${colorOption}`}
+                    aria-pressed={
+                      color === colorOption
+                    }
+                    className={`size-10 rounded-full border-4 transition hover:scale-105 ${
+                      color === colorOption
+                        ? "border-zinc-950 dark:border-white"
+                        : "border-transparent"
+                    }`}
+                    style={{
+                      backgroundColor:
+                        colorOption,
+                    }}
+                  />
+                ),
+              )}
             </div>
           </fieldset>
 
-          <fieldset>
+          <fieldset disabled={isSubmitting}>
             <legend className="mb-3 text-sm font-medium">
               Ícono
             </legend>
 
             <div className="grid grid-cols-3 gap-3">
-              {iconOptions.map((iconOption) => {
-                const Icon = iconOption.icon;
-                const selected =
-                  icon === iconOption.value;
+              {ICON_OPTIONS.map(
+                (iconOption) => {
+                  const selected =
+                    icon === iconOption.value;
 
-                return (
-                  <button
-                    key={iconOption.value}
-                    type="button"
-                    onClick={() =>
-                      setIcon(iconOption.value)
-                    }
-                    className={`flex flex-col items-center justify-center gap-2 rounded-2xl border px-3 py-4 text-xs font-medium transition ${
-                      selected
-                        ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950"
-                        : "border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300"
-                    }`}
-                  >
-                    <Icon size={21} />
-                    {iconOption.label}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={iconOption.value}
+                      type="button"
+                      onClick={() =>
+                        setIcon(
+                          iconOption.value,
+                        )
+                      }
+                      aria-pressed={selected}
+                      className={`flex flex-col items-center justify-center gap-2 rounded-2xl border px-3 py-4 text-xs font-medium transition ${
+                        selected
+                          ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950"
+                          : "border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300"
+                      }`}
+                    >
+                      <AppIcon
+                        name={iconOption.value}
+                        size={21}
+                      />
+
+                      {iconOption.label}
+                    </button>
+                  );
+                },
+              )}
             </div>
           </fieldset>
 

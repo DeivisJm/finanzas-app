@@ -2,7 +2,7 @@ import { FolderManager } from "@/components/folders/folder-manager";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { prisma } from "@/lib/prisma";
 import type { FolderSummary } from "@/types/folder";
-import { getIconComponent } from "@/lib/icons";
+import { AppIcon } from "@/components/ui/app-icon";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -81,8 +81,6 @@ export default async function ProjectPage({
 
   const { project, folders } = data;
 
-  const ProjectIcon = getIconComponent(project.icon);
-
   return (
     <main className="relative min-h-screen overflow-hidden bg-zinc-50 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
       <div
@@ -112,7 +110,12 @@ export default async function ProjectPage({
               backgroundColor: project.color,
             }}
           >
-            <ProjectIcon size={27} strokeWidth={1.8} />
+            <AppIcon
+              name={project.icon}
+              size={27}
+              strokeWidth={1.8}
+            />
+            
           </div>
 
           <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
